@@ -125,7 +125,7 @@ def evaluation_agent(state: RunState) -> RunState:
     messages = [
         log(NODE, f"Holdout {headline}={metrics.get(headline)} on "
                   f"{len(split.X_test)} unseen rows. {split.description}"),
-        log(NODE, f"Exported model.pkl and model_card.json."),
+        log(NODE, "Exported model.pkl and model_card.json."),
     ]
 
     return RunState(
