@@ -22,7 +22,21 @@ _real_open = builtins.open
 
 
 def _apply_limits(memory_mb: int, timeout_s: int) -> None:
-    """Cap address space and CPU. POSIX only; see the note in sandbox.py."""
+    """Cap address space and CPU. POSIX only; see the note in sandbox.py.
+
+    Deliberately does not cap RLIMIT_NPROC. It reads like a cheap "no new
+    processes" backstop, but the limit counts every process owned by the *uid*
+    rather than by this child, and thread creation counts against it. numpy's
+    OpenBLAS sizes a thread pool from the host CPU count at import, so a low
+    cap kills `import numpy` outright — surfacing, unhelpfully, as
+    KeyboardInterrupt — and any workable value tracks the host's CPU count.
+    It is also a no-op for root, which is how it survived: Windows applies no
+    rlimits at all, so the tests only ever exercised it as a no-op.
+
+    Spawning is still blocked where it can be enforced precisely: os,
+    subprocess, multiprocessing and threading are absent from the import
+    allow-list, and __import__/eval/exec are banned names.
+    """
     try:
         import resource  # noqa: PLC0415 - unavailable on Windows, hence the guard
     except ImportError:
@@ -37,10 +51,6 @@ def _apply_limits(memory_mb: int, timeout_s: int) -> None:
         # Backstop for the parent's wall-clock kill: a spin loop burns CPU and
         # would otherwise sit at 100% until the parent notices.
         resource.setrlimit(resource.RLIMIT_CPU, (timeout_s, timeout_s + 1))
-    except (ValueError, OSError):
-        pass
-    try:
-        resource.setrlimit(resource.RLIMIT_NPROC, (0, 0))
     except (ValueError, OSError):
         pass
 
