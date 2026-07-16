@@ -1,0 +1,55 @@
+name: autonomous-data-scientist
+
+services:
+  redis:
+    image: redis/redis-stack-server:7.4.0-v1
+    # redis-stack, not plain redis: LangGraph's RedisSaver builds RediSearch
+    # indices for checkpoint queries, which vanilla Redis doesn't ship.
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DB_PATH: /app/data/runs.db
+      RUNS_DIR: /app/runs
+    ports:
+      - "8000:8000"
+    volumes:
+      # Runs and history outlive the container: a .pkl you can't retrieve after a
+      # restart isn't an export.
+      - runs_data:/app/runs
+      - db_data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    environment:
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  runs_data:
+  db_data:
