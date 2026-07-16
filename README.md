@@ -1,5 +1,7 @@
 # Autonomous Data Scientist
 
+[![CI](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Give it a CSV and a sentence — *"predict churn"* — and it cleans the data, explores
 it, engineers features, compares models, tunes the winner, evaluates it honestly,
 writes the story, builds a PowerPoint deck, exports the fitted model, and then
