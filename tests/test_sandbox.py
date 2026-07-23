@@ -83,11 +83,33 @@ class TestBlockedCode:
             "__import__('os').system('whoami')",
             "().__class__.__base__.__subclasses__()",
             "globals()['__builtins__']",
+            # String-form dunder access via getattr. Before getattr was banned,
+            # this walked object's subclasses to a module's globals and pulled the
+            # already-imported `os` out of sys.modules — a confirmed full escape
+            # that the AST dunder-attribute rule could not see.
+            'getattr(getattr(0, "__class__"), "__base__").__subclasses__()',
+            'getattr(0, "__class__")',
+            'setattr(object, "x", 1)',
         ],
     )
     def test_escape_routes_are_rejected(self, tmp_path, snippet):
         result = run_code(snippet, tmp_path)
         assert not result.ok
+        assert result.violations
+
+    def test_getattr_sys_modules_escape_is_blocked(self, tmp_path):
+        """The exact payload that reached os.listdir before the getattr ban."""
+        payload = (
+            'osmod=None\n'
+            'for c in getattr(getattr(getattr(0,"__class__"),"__base__"),'
+            '"__subclasses__")():\n'
+            '    g=getattr(getattr(c,"__init__",None),"__globals__",None)\n'
+            '    if isinstance(g,dict) and "sys" in g:\n'
+            '        osmod=g["sys"].modules.get("os"); break\n'
+            'result=osmod.listdir(".") if osmod else "blocked"\n'
+        )
+        result = run_code(payload, tmp_path)
+        assert not result.ok, "sandbox escape executed"
         assert result.violations
 
     def test_the_malicious_snippet_from_the_spec(self, tmp_path):

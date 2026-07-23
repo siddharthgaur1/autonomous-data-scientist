@@ -35,6 +35,15 @@ ALLOWED_IMPORTS: frozenset[str] = frozenset(
 #: Names that are never callable from generated code, even though some are
 #: builtins. `open` is absent from this list on purpose: it is wrapped by a path
 #: guard at runtime rather than removed, since writing artifacts is legitimate.
+#:
+#: getattr/setattr/delattr are here because the AST guard below rejects dunder
+#: access written as an *attribute* (`x.__class__`) but cannot see it when the
+#: name arrives as a *string* (`getattr(x, "__class__")`). Without banning them,
+#: `getattr(0, "__class__").__base__.__subclasses__()` reaches `object`'s
+#: subclasses, walks to a loaded module's globals, and pulls the already-imported
+#: `os` straight out of `sys.modules` — a full sandbox escape, confirmed against
+#: this policy before the ban. Generated data-science code has no legitimate need
+#: to reach attributes reflectively.
 BANNED_NAMES: frozenset[str] = frozenset(
     {
         "eval",
@@ -44,6 +53,9 @@ BANNED_NAMES: frozenset[str] = frozenset(
         "globals",
         "locals",
         "vars",
+        "getattr",
+        "setattr",
+        "delattr",
         "breakpoint",
         "input",
         "memoryview",
