@@ -1,6 +1,12 @@
 # Autonomous Data Scientist
 
-[![CI](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Runs on free Groq](https://img.shields.io/badge/runs%20on-free%20Groq%20tier-brightgreen)](#run-it-for-free)
+
+> **Live demo:** not hosted — this runs an 11-agent LLM graph and needs a model
+> key, so there is no zero-key public demo to click. It runs end-to-end on a
+> **free** Groq key (see [Run it for free](#run-it-for-free)); the numbers under
+> [Real metrics from an actual run](#real-metrics-from-an-actual-run) are from a
+> real local run, not invented.
 
 Give it a CSV and a sentence — *"predict churn"* — and it cleans the data, explores
 it, engineers features, compares models, tunes the winner, evaluates it honestly,
@@ -134,14 +140,57 @@ pause; any unrecoverable error → a failed run with a readable message.
 
 ---
 
+## Run it for free
+
+The graph is provider-agnostic through one env var. It speaks the OpenAI wire
+format, so any OpenAI-compatible endpoint runs the whole thing — including free
+ones. Nothing is hardcoded to paid OpenAI.
+
+**Free hosted (Groq):**
+
+```bash
+cp .env.example .env
+# in .env:
+OPENAI_API_KEY=gsk_...                        # free from https://console.groq.com/keys
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+REASONING_MODEL=llama-3.3-70b-versatile
+CHEAP_MODEL=llama-3.1-8b-instant
+```
+
+**Fully offline (Ollama, no key at all):**
+
+```bash
+ollama pull qwen2.5:7b
+# in .env:
+OPENAI_API_KEY=ollama                          # any non-empty string
+OPENAI_BASE_URL=http://localhost:11434/v1
+REASONING_MODEL=qwen2.5:7b
+CHEAP_MODEL=qwen2.5:7b
+```
+
+Redis is optional — if it is unreachable the run degrades to an in-memory
+checkpointer and still reaches an answer. So the minimum to run is a single key.
+
+| Variable | Required | Default | How to get it free |
+| --- | --- | --- | --- |
+| `OPENAI_API_KEY` | **Yes** | — | Groq: [console.groq.com/keys](https://console.groq.com/keys) (free). Or `ollama` for local. |
+| `OPENAI_BASE_URL` | No | `""` (OpenAI) | Set to the Groq/OpenRouter/Ollama URL above to avoid paid usage. |
+| `REASONING_MODEL` | No | `gpt-4o` | Free-tier model name for your provider. |
+| `CHEAP_MODEL` | No | `gpt-4o-mini` | Cheaper model for mechanical sub-tasks. |
+| `REDIS_URL` | No | `redis://localhost:6379/0` | Optional; run degrades gracefully without it. |
+| `DB_PATH` | No | `data/runs.db` | — |
+| `MAX_RUN_COST_USD` | No | `2.0` | Hard per-run spend cap (unknown models priced at $0). |
+
+---
+
 ## Setup
 
 ```bash
-git clone https://github.com/<you>/autonomous-data-scientist
+git clone https://github.com/siddharthgaur1/autonomous-data-scientist
 cd autonomous-data-scientist
 
 cp .env.example .env
-# Put your real OPENAI_API_KEY in .env — every var is documented in the example.
+# Set OPENAI_API_KEY. For a free run, also set OPENAI_BASE_URL — see "Run it for free".
 
 docker compose up --build
 ```
@@ -373,3 +422,25 @@ redirects all paths to a tmpdir so a test run can't write to a real `runs/`.
    scale.
 7. **Cost cap is per-run, checked before each call.** A single expensive call can
    still overshoot it. Token-level streaming budgets would make it exact.
+
+---
+
+## Security
+
+This system executes LLM-generated Python, so the sandbox is the whole security
+story. Full threat model and the layered policy: **[SECURITY.md](SECURITY.md)**.
+
+Worth calling out: during this hardening pass a **real sandbox escape was found and
+fixed**. The static gate blocked dunder access written as an attribute
+(`x.__class__`) but not as a string (`getattr(x, "__class__")`), which let
+generated code walk `object.__subclasses__()` to the already-loaded `os` module in
+`sys.modules` — confirmed by execution before the fix. `getattr`/`setattr`/`delattr`
+are now banned names, and `tests/test_sandbox.py` runs the exact escape payload and
+asserts it never executes.
+
+- `gitleaks` over full history: **0 findings**; no `.env` ever tracked.
+- `pip-audit`: **no known vulnerabilities**.
+- Both container images run as a non-root user.
+- **Not mitigated:** no API auth (single-operator tool); prompt injection via
+  uploaded datasets (the sandbox is the mitigation, not injection prevention); the
+  memory/CPU rlimits are POSIX-only (Linux deployment, no-op on Windows dev).
