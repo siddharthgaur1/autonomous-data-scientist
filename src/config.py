@@ -20,9 +20,17 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    openai_api_key: str = Field(..., description="OpenAI API key.")
-    redis_url: str = Field(..., description="Redis URL for checkpoints and run cache.")
-    db_path: Path = Field(..., description="SQLite file holding run history.")
+    openai_api_key: str = Field(..., description="LLM API key (OpenAI or any compatible provider).")
+    # Any OpenAI-compatible endpoint. Leave empty for OpenAI itself; set it to run
+    # on a free tier instead — Groq (https://api.groq.com/openai/v1), OpenRouter,
+    # Together, or a local Ollama (http://localhost:11434/v1). The whole agent
+    # graph then runs without paid OpenAI usage.
+    openai_base_url: str = Field(default="", description="OpenAI-compatible base URL; empty = OpenAI.")
+    # Redis is a convenience (resumable checkpoints), not a requirement: the runner
+    # already degrades to a keyless in-memory run if it is unreachable. Defaulted so
+    # the app imports and runs with nothing but an API key.
+    redis_url: str = Field(default="redis://localhost:6379/0", description="Redis URL for checkpoints and run cache.")
+    db_path: Path = Field(default=Path("data/runs.db"), description="SQLite file holding run history.")
     runs_dir: Path = Field(
         default=Path("runs"), description="Root for per-run artifacts."
     )
