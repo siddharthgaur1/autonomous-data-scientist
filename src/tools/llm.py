@@ -34,12 +34,16 @@ class CostCapExceeded(RuntimeError):
 
 def _model(name: str, temperature: float) -> ChatOpenAI:
     settings = get_settings()
+    # base_url is passed only when set, so the default path stays plain OpenAI.
+    # A non-empty value points every call at a compatible free provider instead.
+    extra = {"base_url": settings.openai_base_url} if settings.openai_base_url else {}
     return ChatOpenAI(
         model=name,
         temperature=temperature,
         api_key=settings.openai_api_key,
         timeout=90,
         max_retries=2,
+        **extra,
     )
 
 
