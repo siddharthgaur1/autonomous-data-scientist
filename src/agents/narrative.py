@@ -86,9 +86,9 @@ def _fact_sheet(state: RunState) -> str:
     tuning = state.get("tuning_results")
     if tuning:
         lines += [
-            f"Tuning: {tuning.n_trials} Optuna trials, "
+            (f"Tuning: {tuning.n_trials} Optuna trials, "
             f"baseline {tuning.baseline_score} -> best {tuning.best_score} "
-            f"({tuning.improvement:+.4f})",
+            f"({tuning.improvement:+.4f})"),
             f"Best params: {tuning.best_params}",
         ]
 

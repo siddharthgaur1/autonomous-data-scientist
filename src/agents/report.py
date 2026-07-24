@@ -69,9 +69,14 @@ def _heading(slide, text):
           size=28, bold=True, color=INK_PRIMARY)
 
 
-def _fit_image(slide, image_path: Path, top=Inches(1.4), max_h=Inches(5.4)):
+def _fit_image(slide, image_path: Path, top=None, max_h=None):
     """Centre an image, scaled to fit the content area."""
-    from PIL import Image  # noqa: PLC0415 - pillow ships with python-pptx
+    from PIL import Image
+
+    if top is None:
+        top = Inches(1.4)
+    if max_h is None:
+        max_h = Inches(5.4)
 
     with Image.open(image_path) as img:
         ratio = img.height / img.width
@@ -160,7 +165,7 @@ def report_agent(state: RunState) -> RunState:
     if evaluation:
         slide = _blank(prs)
         _heading(slide, "How well it works")
-        headline = list(evaluation.metrics.items())[0] if evaluation.metrics else None
+        headline = next(iter(evaluation.metrics.items())) if evaluation.metrics else None
         if headline:
             _text(slide, f"{headline[1]}", Inches(0.7), Inches(1.4),
                   Inches(4), Inches(1.4), size=64, bold=True, color=ACCENT)

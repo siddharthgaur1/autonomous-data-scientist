@@ -39,7 +39,7 @@ _lock = threading.Lock()
 
 def store() -> RunStore:
     """The run store, created once on first use."""
-    global _store  # noqa: PLW0603 - one process-wide handle, guarded
+    global _store
     with _lock:
         if _store is None:
             _store = RunStore(get_settings().db_path)
@@ -121,7 +121,7 @@ def health() -> dict:
 @app.post("/runs", response_model=RunCreated, status_code=202)
 def create_run(
     goal: str = Form(..., description="Plain-English goal, e.g. 'predict churn'"),
-    file: UploadFile = File(..., description="The CSV to analyse"),
+    file: UploadFile = File(..., description="The CSV to analyse"),  # noqa: B008 - FastAPI's DI pattern requires call-in-default
 ) -> RunCreated:
     """Accept a CSV and a goal, and start a run in the background."""
     if not file.filename or not file.filename.lower().endswith(".csv"):

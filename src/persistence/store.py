@@ -11,10 +11,10 @@ stdlib sqlite3 rather than an ORM: the schema is two tables and never joins.
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator
 
 from ..state.schema import RunState, RunStatus
 from ..state.serde import state_from_json, state_to_json

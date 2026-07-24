@@ -38,7 +38,7 @@ def _apply_limits(memory_mb: int, timeout_s: int) -> None:
     allow-list, and __import__/eval/exec are banned names.
     """
     try:
-        import resource  # noqa: PLC0415 - unavailable on Windows, hence the guard
+        import resource
     except ImportError:
         return
     nbytes = memory_mb * 1024 * 1024
@@ -63,7 +63,7 @@ def _install_import_guard(code_file: str, allowed: set[str], banned: set[str]) -
     would have to enumerate every transitive dependency of scikit-learn.
     """
 
-    def guarded(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: A002
+    def guarded(name, globals=None, locals=None, fromlist=(), level=0):
         frame = sys._getframe(1)
         if frame.f_code.co_filename == code_file:
             root = name.split(".", 1)[0]
@@ -84,7 +84,7 @@ def _install_open_guard(run_dir: str, read_roots: list[str]) -> None:
     a credentials file would otherwise sail through, since the open happens in
     pandas' frame rather than the generated code's.
     """
-    import os.path as _p  # noqa: PLC0415 - the child never exposes `os` to user code
+    import os.path as _p
 
     run_root = _p.realpath(run_dir)
     safe_read_roots = [_p.realpath(r) for r in read_roots] + [run_root]
@@ -95,7 +95,7 @@ def _install_open_guard(run_dir: str, read_roots: list[str]) -> None:
         except ValueError:  # different drives on Windows
             return False
 
-    def guarded(file, mode="r", *args, **kwargs):  # noqa: A002
+    def guarded(file, mode="r", *args, **kwargs):
         target = file if isinstance(file, (str, bytes)) else getattr(file, "name", "")
         if isinstance(target, bytes):
             target = target.decode("utf-8", "replace")
@@ -128,7 +128,7 @@ def _jsonable(value: object) -> object:
         if callable(to_dict):
             try:
                 return json.loads(json.dumps(to_dict(), default=str))
-            except Exception:  # noqa: BLE001 - fall through to repr
+            except Exception:  # noqa: BLE001, S110 - fall through to repr
                 pass
         return repr(value)[:5000]
 
