@@ -15,6 +15,6 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements.txt ruff
+      - run: pip install -r requirements.txt ruff==0.16.0
       - run: ruff check src/ --ignore E501
       - run: pytest tests/ -v

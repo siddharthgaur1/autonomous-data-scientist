@@ -11,7 +11,7 @@ itself, not by each agent remembering to do it.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from langgraph.graph import END, START, StateGraph
 
@@ -105,7 +105,7 @@ def _instrument(
         if store is not None:
             try:
                 store.record_transition(_merged(state, update), stage=name)
-            except Exception:  # noqa: BLE001 - the audit log must never kill the run
+            except Exception:  # noqa: BLE001, S110 - the audit log must never kill the run
                 pass
         return update
 

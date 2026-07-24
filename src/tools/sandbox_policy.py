@@ -166,8 +166,8 @@ def _check_import(root: str, full: str) -> list[str]:
         return [f"Import of '{full}' is blocked by the sandbox policy."]
     if root not in ALLOWED_IMPORTS:
         return [
-            f"Import of '{full}' is not on the allow-list "
-            f"({', '.join(sorted(ALLOWED_IMPORTS))})."
+            (f"Import of '{full}' is not on the allow-list "
+            f"({', '.join(sorted(ALLOWED_IMPORTS))}).")
         ]
     return []
 

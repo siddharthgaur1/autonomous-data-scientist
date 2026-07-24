@@ -11,9 +11,9 @@ has the full transition log, so you lose mid-run resume, not the audit trail.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
 
 from ..config import get_settings
 from ..persistence.store import RunStore

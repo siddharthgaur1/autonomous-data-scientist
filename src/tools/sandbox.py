@@ -111,7 +111,7 @@ def run_code(
     before = _snapshot(run_dir)
 
     try:
-        proc = subprocess.run(  # noqa: S603 - fixed argv, no shell
+        proc = subprocess.run(
             [sys.executable, "-I", "-B", str(_CHILD), str(job_path)],
             cwd=str(run_dir),
             capture_output=True,
