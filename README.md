@@ -335,7 +335,7 @@ paused when answered. The dashboard renders this as a first-class state, not an 
 
 ---
 
-## Real metrics from an actual run
+## Results (real metrics from an actual run)
 
 `customer_churn.csv` (804 rows), goal **"predict churn"**. Cleaning dropped 4
 duplicate rows, parsed `total_charges` from text (18 blanks → 0.0 for new
@@ -398,6 +398,14 @@ redirects all paths to a tmpdir so a test run can't write to a real `runs/`.
 | `test_graph.py` | A full run on a 30-row fixture reaches `COMPLETED` with every deliverable; **a low-confidence run pauses with no narrative and no metrics**; cost cap and unrecoverable errors end cleanly |
 | `test_persistence.py` | Typed payloads round-trip through SQLite; transitions are ordered; a run is replayable |
 | `test_api.py` | Routes, 404/400/409 guards, and **artifact path traversal is refused** |
+
+## Limitations
+
+A first-draft analyst, not a replacement for one (see "What it solves"
+above) — model selection covers 3-5 candidates, not a full AutoML sweep;
+narrative generation is constrained to cite only numbers already in state,
+but that constraint is enforced by prompt design, not a separate verifier.
+Full list of known gaps below.
 
 ## What I'd improve with more time
 
