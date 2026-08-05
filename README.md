@@ -407,7 +407,7 @@ narrative generation is constrained to cite only numbers already in state,
 but that constraint is enforced by prompt design, not a separate verifier.
 Full list of known gaps below.
 
-## What I'd improve with more time
+## Limitations
 
 1. **Runs die with the API process.** Background threads, not a task queue — a
    restart mid-run loses it (the audit log survives; the run doesn't resume). The
