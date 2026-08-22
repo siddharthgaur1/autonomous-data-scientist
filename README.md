@@ -1,5 +1,7 @@
 # Autonomous Data Scientist
 
+[![Portfolio](https://img.shields.io/badge/↩-siddharthgaur1-111827?style=flat-square)](https://github.com/siddharthgaur1)
+
 [![CI](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthgaur1/autonomous-data-scientist/actions/workflows/ci.yml) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Runs on free Groq](https://img.shields.io/badge/runs%20on-free%20Groq%20tier-brightgreen)](#run-it-for-free)
 
 > **Live demo:** not hosted — this runs an 11-agent LLM graph and needs a model
