@@ -10,6 +10,10 @@
 > [Real metrics from an actual run](#real-metrics-from-an-actual-run) are from a
 > real local run, not invented.
 
+![Churn rate by contract type in the committed sample dataset](docs/churn-by-contract.png)
+
+<sub>The input, not the output: churn rate per contract type in the committed `sample_data/customer_churn.csv` after dropping duplicates and folding casings — the signal the pipeline is expected to recover. Regenerate with `python scripts/make_readme_chart.py`.</sub>
+
 Give it a CSV and a sentence — *"predict churn"* — and it cleans the data, explores
 it, engineers features, compares models, tunes the winner, evaluates it honestly,
 writes the story, builds a PowerPoint deck, exports the fitted model, and then
