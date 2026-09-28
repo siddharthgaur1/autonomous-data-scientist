@@ -125,6 +125,28 @@ evaluation → narrative → report → Reviewer → *approve* → done.
 retries each, then escalates); low confidence or Reviewer *escalate* → human
 pause; any unrecoverable error → a failed run with a readable message.
 
+The compiled LangGraph, node for node and edge for edge
+(`build_graph().get_graph()` over `src/graph/build.py`; dashed = conditional):
+
+```mermaid
+flowchart TD
+    START([start]) --> supervisor
+    supervisor -.-> cleaning
+    supervisor -.->|low confidence| human_escalation
+    cleaning -.-> eda -.-> features -.-> model_selection -.-> tuning
+    tuning -.-> evaluation -.-> narrative -.-> report -.-> reviewer
+    reviewer -.->|approve| done
+    reviewer -.->|escalate / bad retry_stage| human_escalation
+    reviewer -.->|revise| cleaning & eda & features & model_selection & tuning & evaluation & narrative & report
+    supervisor & cleaning & eda & features & model_selection & tuning & evaluation & narrative & report & reviewer -.->|error| fail
+    human_escalation & done & fail --> END([end])
+```
+
+`human_escalation → end` is a pause, not a finish: the checkpointer holds the
+state until the API resumes the thread. The revise edge is wired to all eight
+pipeline stages, but the Reviewer only ever names seven — `eda` is wired and
+never chosen (`VALID_STAGES`, `src/agents/reviewer.py:56`).
+
 ---
 
 ## Tech stack
