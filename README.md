@@ -261,7 +261,11 @@ component in the repo, so it gets two gates:
    `importlib`, `pty`, and `().__class__.__base__.__subclasses__()`. The allow-list
    inverts the burden of proof.
 2. **A separate `python -I` process** with an import guard, an `open()` path guard,
-   POSIX rlimits (address space, CPU, no forking) and a wall-clock kill.
+   POSIX rlimits (address space, CPU) and a wall-clock kill. There is no
+   process-count rlimit — `RLIMIT_NPROC` broke `import numpy` — so spawning is
+   blocked by the import/name policy instead.
+
+Every layer, with exact limits and source lines: [docs/sandbox.md](docs/sandbox.md).
 
 Two details worth naming:
 
