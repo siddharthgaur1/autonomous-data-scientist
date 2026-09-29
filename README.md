@@ -267,6 +267,27 @@ curl -X POST http://localhost:8000/runs/a1b2c3d4e5f6/ask \
   -d '{"question":"which feature mattered most?"}'
 ```
 
+### Checking an exported model for input drift
+
+Next to `model.pkl` and `model_card.json`, every run writes
+`reference_profile.json`: decile bin edges and shares for each numeric training
+feature, category shares for the rest. It holds aggregates only — no rows, and
+categories seen fewer than 5 times are folded into `__other__`, so an ID column
+can't leak into the artifact. The card names it under `reference_profile`.
+
+Score new data (same columns you'd pass to `model.predict`) against it:
+
+```bash
+python -m src.tools.drift runs/a1b2c3d4e5f6 new_batch.csv   # exit 1 on drift
+```
+
+or `check_drift(new_df, load_profile(run_dir))` from `src.tools.drift`. It returns
+per-feature Population Stability Index and an overall `drift` flag, set when any
+feature's PSI exceeds **0.2** (the conventional "significant shift" cut-off;
+below 0.1 is stable) or a training feature is missing. `model.pkl` is a plain
+scikit-learn Pipeline, so it can also be served through ml-platform's
+`SklearnAdapter`; the drift check doesn't need it.
+
 ---
 
 ## Key design decisions
@@ -417,7 +438,7 @@ run was not.
 ## Tests
 
 ```bash
-pytest tests/ -v      # 76 passing
+pytest tests/ -v      # 85 passing
 ```
 
 No test touches the OpenAI API — every LLM boundary is mocked, and `conftest.py`
@@ -430,6 +451,7 @@ redirects all paths to a tmpdir so a test run can't write to a real `runs/`.
 | `test_graph.py` | A full run on a 30-row fixture reaches `COMPLETED` with every deliverable; **a low-confidence run pauses with no narrative and no metrics**; cost cap and unrecoverable errors end cleanly |
 | `test_persistence.py` | Typed payloads round-trip through SQLite; transitions are ordered; a run is replayable |
 | `test_api.py` | Routes, 404/400/409 guards, and **artifact path traversal is refused** |
+| `test_drift.py` | A shifted sample is flagged and a same-distribution one isn't; a dropped feature counts as drift; **the reference profile holds no raw values**; CLI exit code |
 
 ## Limitations
 
@@ -437,9 +459,7 @@ A first-draft analyst, not a replacement for one (see "What it solves"
 above) — model selection covers 3-5 candidates, not a full AutoML sweep;
 narrative generation is constrained to cite only numbers already in state,
 but that constraint is enforced by prompt design, not a separate verifier.
-Full list of known gaps below.
-
-## Limitations
+The known gaps:
 
 1. **Runs die with the API process.** Background threads, not a task queue — a
    restart mid-run loses it (the audit log survives; the run doesn't resume). The
@@ -454,9 +474,10 @@ Full list of known gaps below.
 4. **The leakage check is correlation-only.** It catches a copied target; it won't
    catch a categorical that encodes the target, or leakage via a group key. Mutual
    information + a target-encoding audit would go further.
-5. **No drift monitoring.** The model card has the data hash and training date but
-   nothing watches for the input distribution moving. That's the difference between
-   an exported model and a deployed one.
+5. **Drift is checked on demand, not watched.** Each export ships a reference
+   profile and `python -m src.tools.drift` scores new data against it (see above),
+   but nothing schedules that check or alerts on it, and PSI is per-feature — it
+   won't see a shift in the joint distribution that leaves every marginal intact.
 6. **Q&A is single-turn.** It reloads the whole run record per question. Fine at
    this size; wants conversation memory and retrieval over the transition log to
    scale.

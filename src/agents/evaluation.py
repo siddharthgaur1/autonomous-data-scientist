@@ -113,6 +113,7 @@ def evaluation_agent(state: RunState) -> RunState:
         metrics=metrics,
         training_data_path=state["raw_df_path"],
         best_params=params,
+        reference_features=split.X_train,
     )
     artifacts += [
         Artifact(kind="model", path=relative_to_run(model_path, run_dir),

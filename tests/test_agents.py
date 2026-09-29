@@ -214,6 +214,12 @@ class TestEvaluation:
         assert (run_dir / "model_card.json").exists()
         assert {"model", "model_card"} <= {a.kind for a in update["artifacts"]}
 
+        from src.tools.drift import load_profile
+        from src.tools.model_io import load_card
+
+        assert load_card(run_dir)["reference_profile"] == "reference_profile.json"
+        assert set(load_profile(run_dir)["features"]) == set(load_card(run_dir)["features"])
+
     def test_baseline_ships_when_tuning_made_things_worse(
         self, completed_state, monkeypatch, settings
     ):
