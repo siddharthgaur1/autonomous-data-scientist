@@ -16,7 +16,10 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import pandas as pd
 from sklearn.pipeline import Pipeline
+
+from .drift import save_profile
 
 
 def data_hash(path: Path | str) -> str:
@@ -38,8 +41,13 @@ def save_model(
     metrics: dict[str, float],
     training_data_path: Path | str,
     best_params: dict[str, Any] | None = None,
+    reference_features: pd.DataFrame | None = None,
 ) -> tuple[Path, Path]:
-    """Write `model.pkl` and `model_card.json`. Returns both paths."""
+    """Write `model.pkl` and `model_card.json`. Returns both paths.
+
+    With `reference_features` (the training X), also writes the drift baseline
+    `reference_profile.json` (see `drift.py`) and names it in the card.
+    """
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -59,6 +67,8 @@ def save_model(
         "data_hash": data_hash(training_data_path),
         "sklearn_pipeline": True,
     }
+    if reference_features is not None:
+        card["reference_profile"] = save_profile(reference_features, run_dir).name
     card_path.write_text(json.dumps(card, indent=2, default=str), encoding="utf-8")
     return model_path, card_path
 
